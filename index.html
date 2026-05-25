@@ -449,10 +449,10 @@
         <div class="input-row">
           <div class="meta-info">
             <label class="field-label">Verbal Ability <span class="badge">j</span></label>
-            <div class="field-range">Range: 30 – 160</div>
+            <div class="field-range">Range: 30 – 162</div>
           </div>
           <div class="input-wrapper">
-            <input type="number" id="j" placeholder="0" min="30" max="160" />
+            <input type="number" id="j" placeholder="0" min="30" max="162" />
             <span class="live-contrib" id="va-contrib">contrib: —</span>
           </div>
         </div>
@@ -497,7 +497,7 @@
             </tr>
           </thead>
           <tbody>
-            </tbody>
+          </tbody>
         </table>
       </div>
     </div>
@@ -509,18 +509,18 @@
 
 <script>
   // --- PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE ---
-  const SCRIPT_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0RRMHHkK8DUNHSyayF5finjC_bV4X8Mdv6WZPAW8u8aZGhBswbobUGQETNhmTJ2TAzg/exec";
 
   // Framework Formula Constants
   const a = 4,   b = 60;   
   const c = 3,   d = 85;   
-  const e = 30,  f = 160;  
+  const e = 30,  f = 162; // Fixed: Scaled up to 162 max per instructions
 
   const userFieldIds = ['h', 'i', 'j'];
 
-  // Global Dynamic In-Memory Category Matrix
+  // Global Dynamic In-Memory Category Matrix (Fixed EWS values)
   const categoryMatrix = {
-    "EWS":     { min: 31.16339, max: 71.70397 },
+    "EWS":     { min: 31.16390, max: 71.70397 },
     "General": { min: 50.25931, max: 91.00643 },
     "NC-OBC":  { min: 24.86465, max: 72.81828 },
     "PwD":     { min: 1.82927,  max: 50.13602 },
@@ -528,7 +528,6 @@
     "ST":      { min: 13.44144, max: 50.17221 }
   };
 
-  // System Initialization Hooks
   document.addEventListener("DOMContentLoaded", () => {
     renderMatrixTable();
     checkDeviceLockout();
@@ -568,8 +567,6 @@
       });
       
       document.getElementById("category").value = localStorage.getItem("saved_category") || "General";
-      
-      // Calculate and render locked snapshot properties instantly
       executeCalculationLogic(false); 
     }
   }
@@ -633,29 +630,24 @@
       return;
     }
 
-    // Process Equations
     const sa_contrib  = 25 * ((h - a) / (b - a));
     const mcq_contrib = 25 * ((i - c) / (d - c));
     const va_contrib  = 50 * ((j - e) / (f - e));
     const ats = sa_contrib + mcq_contrib + va_contrib;
     const finalAtsScore = parseFloat(ats.toFixed(5));
 
-    // Update Output Dom Properties
     document.getElementById('ats-value').textContent = finalAtsScore.toFixed(5);
     document.getElementById('stats-category-lbl').textContent = selectedCategory;
 
-    // Mutate and compare matrix variables dynamically in-memory contextually 
     if (finalAtsScore < categoryMatrix[selectedCategory].min) categoryMatrix[selectedCategory].min = finalAtsScore;
     if (finalAtsScore > categoryMatrix[selectedCategory].max) categoryMatrix[selectedCategory].max = finalAtsScore;
 
-    // Display localized variances
     document.getElementById('cat-min-val').textContent = categoryMatrix[selectedCategory].min.toFixed(5);
     document.getElementById('cat-max-val').textContent = categoryMatrix[selectedCategory].max.toFixed(5);
     
     const maxDifference = categoryMatrix[selectedCategory].max - finalAtsScore;
     document.getElementById('cat-diff-val').textContent = maxDifference <= 0 ? "0.00000 (Highest Internal Score Record)" : `-${maxDifference.toFixed(5)}`;
 
-    // Refresh display metrics table layout highlighting active configuration context
     renderMatrixTable(selectedCategory);
     
     document.getElementById('result-panel').classList.add('visible');
@@ -672,7 +664,7 @@
         mcqScore: i,
         vaScore: j,
         atsScore: ats.toFixed(5),
-        category: category // This will safely log in the script if mapped, otherwise won't break anything.
+        category: category
     };
 
     const btn = document.getElementById('calc-submit-btn');
@@ -686,7 +678,6 @@
         body: JSON.stringify(payload)
     })
     .then(() => {
-        // Enforce Local Browser Hardware Lock
         localStorage.setItem("ipmat_submitted", "true");
         localStorage.setItem("saved_category", category);
         localStorage.setItem("saved_h", h);
